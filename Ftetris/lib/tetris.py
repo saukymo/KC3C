@@ -3,6 +3,7 @@ from pygame.locals import *
 import util
 from sound import play_sound
 from shape import Tile, Shape
+import thread 
 from bluet import *
 
 class Tetris(object):
@@ -27,6 +28,7 @@ class Tetris(object):
         self.level = 1
         self.killed = 0
         self.score = 0
+        self.data = 0
         # after this time, shape falls
         self.time = self.SPACE * 0.8 ** (self.level - 1)
         # save the elapsed time after last fail
@@ -42,10 +44,14 @@ class Tetris(object):
         self.screen.blit(pygame.image.load(
             util.file_path("background.jpg")).convert(), (0, 0))
         self.display_info()
+        thread.start_new_thread(self.thget, ())
+
+    def thget(self):
+        while True:
+            self.data = get()
+            print "received [%s]" % self.data
 
     def update(self, elapse):
-        data = get()
-        print "received [%s]" % data
         for e in pygame.event.get():
             if e.type == KEYDOWN:
         #        self.pressing = 1
@@ -59,10 +65,10 @@ class Tetris(object):
         #        self.pressing = 0
             elif e.type == QUIT:
                 self.stat = 'quit'
-        if data > 0:
+        if self.data > 0:
             self.pressing = 1
-            self.move(data == '1', data == '4', data == '3', data == '2')
-        if data == 0 and self.pressing:
+            self.move(self.data == '1', self.data == '4', self.data == '3', self.data == '2')
+        if self.data == 0 and self.pressing:
             self.pressing = 0
         if self.pause:
             self.draw()
@@ -71,12 +77,13 @@ class Tetris(object):
             #pressed = pygame.key.get_pressed()
             #self.move(pressed[K_UP], pressed[K_DOWN],
             #        pressed[K_LEFT], pressed[K_RIGHT])
-            self.move(data == '1', data  == '4', data  == '3', data  == '2')
+            self.move(self.data == '1', self.data  == '4', self.data  == '3', self.data  == '2')
         self.elapsed += elapse
         if self.elapsed >= self.time:
             self.next()
             self.elapsed = self.elapsed - self.time
             self.draw()
+        self.data = 0
         return self.stat
 
     def move(self, u, d, l, r):
